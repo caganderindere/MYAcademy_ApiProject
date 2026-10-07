@@ -64,6 +64,23 @@ namespace MYAcademy_ApiProject.Controllers
             {
                 return BadRequest("Ev sahibi ve deplasman takımı aynı olamaz.");
             }
+
+            if (_context.Matches.Any(x =>
+            x.Week == match.Week &&
+              (x.HomeTeamId == match.HomeTeamId ||
+               x.AwayTeamId == match.HomeTeamId ||
+               x.HomeTeamId == match.AwayTeamId ||
+               x.AwayTeamId == match.AwayTeamId)))
+            {
+                return BadRequest("Bu takımlardan biri aynı hafta içinde zaten maç yapıyor.");
+            }
+
+            if (match.Status == "Tamamlandı" &&
+    (match.HomeScore == null || match.AwayScore == null))
+            {
+                return BadRequest("Tamamlanan maçlarda skor bilgisi zorunludur.");
+            }
+
             _context.Matches.Add(match);
             _context.SaveChanges();
 
