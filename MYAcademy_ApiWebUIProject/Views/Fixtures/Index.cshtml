@@ -1,0 +1,21 @@
+﻿@model List<MYAcademy_ApiWebUIProject.Controllers.MatchDto>
+@{
+    
+}
+
+
+<h1>Haftalık Fikstür</h1>
+
+@foreach (var match in Model)
+{
+    <div>
+        <strong>@match.HomeTeam.Name</strong>
+        @match.HomeScore -
+        @match.AwayScore
+        <strong>@match.AwayTeam.Name</strong>
+
+        <span>
+            @match.Status
+        </span>
+    </div>
+}

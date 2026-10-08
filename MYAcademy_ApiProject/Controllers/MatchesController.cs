@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MYAcademy_ApiProject.Context;
 using MYAcademy_ApiProject.Entities;
+using MYAcademy_ApiProject.DTOs;
 
 namespace MYAcademy_ApiProject.Controllers
 {
@@ -36,25 +37,73 @@ namespace MYAcademy_ApiProject.Controllers
                 .Include(x => x.HomeTeam)
                 .Include(x => x.AwayTeam)
                 .Include(x => x.MatchGoals)
+                    .ThenInclude(x => x.Team)
                 .Include(x => x.MatchCards)
+                    .ThenInclude(x => x.Team)
                 .Include(x => x.MatchSubstitutions)
+                    .ThenInclude(x => x.Team)
                 .FirstOrDefault(x => x.MatchId == id);
 
-            return Ok(value);
+            if (value == null)
+            {
+                return NotFound("Maç bulunamadı.");
+            }
 
+            var result = new MatchDetailDto
+            {
+                MatchId = value.MatchId,
+                Week = value.Week,
+                Status = value.Status,
+
+                HomeTeam = value.HomeTeam.Name,
+                AwayTeam = value.AwayTeam.Name,
+
+                HomeScore = value.HomeScore,
+                AwayScore = value.AwayScore,
+
+                MatchDate = value.MatchDate,
+                Time = value.Time,
+                Stadium = value.Stadium,
+
+                Goals = value.MatchGoals.Select(x => new MatchGoalDto
+                {
+                    PlayerName = x.PlayerName,
+                    Minute = x.Minute,
+                    Team = x.Team.Name
+                }).ToList(),
+
+                Cards = value.MatchCards.Select(x => new MatchCardDto
+                {
+                    PlayerName = x.PlayerName,
+                    Minute = x.Minute,
+                    CardType = x.CardType,
+                    Team = x.Team.Name
+                }).ToList(),
+
+                Substitutions = value.MatchSubstitutions.Select(x => new MatchSubstitutionDto
+                {
+                    PlayerOut = x.PlayerOut,
+                    PlayerIn = x.PlayerIn,
+                    Minute = x.Minute,
+                    Team = x.Team.Name
+                }).ToList()
+            };
+
+            return Ok(result);
         }
+
+        // GET: api/Matches/Week/1
         [HttpGet("Week/{week}")]
         public IActionResult GetMatchesByWeek(int week)
         {
             var values = _context.Matches
-                   .Where(x => x.Week == week)
-                   .Include(x => x.HomeTeam)
-                   .Include(x => x.AwayTeam)
-                   .ToList();
+                .Where(x => x.Week == week)
+                .Include(x => x.HomeTeam)
+                .Include(x => x.AwayTeam)
+                .ToList();
 
             return Ok(values);
         }
-
 
         // POST: api/Matches
         [HttpPost]
@@ -66,17 +115,19 @@ namespace MYAcademy_ApiProject.Controllers
             }
 
             if (_context.Matches.Any(x =>
-            x.Week == match.Week &&
-              (x.HomeTeamId == match.HomeTeamId ||
-               x.AwayTeamId == match.HomeTeamId ||
-               x.HomeTeamId == match.AwayTeamId ||
-               x.AwayTeamId == match.AwayTeamId)))
+                x.Week == match.Week &&
+                (
+                    x.HomeTeamId == match.HomeTeamId ||
+                    x.AwayTeamId == match.HomeTeamId ||
+                    x.HomeTeamId == match.AwayTeamId ||
+                    x.AwayTeamId == match.AwayTeamId
+                )))
             {
                 return BadRequest("Bu takımlardan biri aynı hafta içinde zaten maç yapıyor.");
             }
 
             if (match.Status == "Tamamlandı" &&
-    (match.HomeScore == null || match.AwayScore == null))
+                (match.HomeScore == null || match.AwayScore == null))
             {
                 return BadRequest("Tamamlanan maçlarda skor bilgisi zorunludur.");
             }
@@ -103,11 +154,15 @@ namespace MYAcademy_ApiProject.Controllers
         {
             var value = _context.Matches.Find(id);
 
+            if (value == null)
+            {
+                return NotFound("Maç bulunamadı.");
+            }
+
             _context.Matches.Remove(value);
             _context.SaveChanges();
 
             return Ok(value);
         }
-
     }
 }
