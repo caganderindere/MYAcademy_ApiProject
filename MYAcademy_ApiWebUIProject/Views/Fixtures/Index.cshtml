@@ -1,21 +1,1328 @@
 ﻿@model List<MYAcademy_ApiWebUIProject.Controllers.MatchDto>
+
 @{
-    
+    var currentWeek = Model?.FirstOrDefault()?.Week ?? 1;
 }
 
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<h1>Haftalık Fikstür</h1>
+    <title>Serie A Fikstür</title>
 
-@foreach (var match in Model)
-{
-    <div>
-        <strong>@match.HomeTeam.Name</strong>
-        @match.HomeScore -
-        @match.AwayScore
-        <strong>@match.AwayTeam.Name</strong>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-        <span>
-            @match.Status
-        </span>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #070F1F;
+            --bg-2: #0B1730;
+            --surface: #0F1D38;
+            --surface-2: #142647;
+            --line: #1F3358;
+            --line-soft: rgba(31, 51, 88, .6);
+
+            --text: #E9F0FB;
+            --text-2: #C4D0E6;
+            --muted: #8B9CC0;
+            --dim: #6A7DA3;
+
+            --blue: #2E7BFF;
+            --blue-bright: #5B9BFF;
+            --green: #1FC98A;
+            --amber: #F2B53B;
+
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+
+            --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+            --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(1100px 480px at 12% -8%,
+                rgba(46, 123, 255, .20),
+                transparent 62%),
+                var(--bg);
+
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .fixtures-shell {
+            width: min(1200px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 72px;
+        }
+
+        /* HERO */
+
+        .fixtures-hero {
+            position: relative;
+            overflow: hidden;
+
+            padding: 30px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+
+            background:
+                linear-gradient(
+                    160deg,
+                    #112552 0%,
+                    #0B1834 55%,
+                    #09142A 100%
+                );
+        }
+
+        .fixtures-hero::after {
+            content: "";
+
+            position: absolute;
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 3px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--blue),
+                    var(--blue-bright),
+                    transparent
+                );
+        }
+
+        .hero-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .hero-league {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 12px;
+
+            color: var(--muted);
+        }
+
+        .league-mark {
+            display: grid;
+            place-items: center;
+
+            width: 30px;
+            height: 30px;
+
+            border-radius: 9px;
+
+            background: linear-gradient(
+                145deg,
+                var(--blue-bright),
+                var(--blue)
+            );
+
+            color: white;
+
+            font-family: var(--font-display);
+            font-weight: 700;
+        }
+
+        .hero-title {
+            margin: 0;
+
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            line-height: .95;
+        }
+
+        .hero-subtitle {
+            max-width: 600px;
+
+            margin: 12px 0 0;
+
+            color: var(--muted);
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 10px;
+
+            margin: 0;
+        }
+
+        .hero-meta > div {
+            min-width: 90px;
+
+            padding: 10px 16px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+
+            background: rgba(255,255,255,.035);
+        }
+
+        .hero-meta dt {
+            color: var(--muted);
+            font-size: .8rem;
+        }
+
+        .hero-meta dd {
+            margin: 0;
+
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        /* PANELS */
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+
+            background: var(--surface);
+        }
+
+        .panel__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 16px 20px;
+
+            border-bottom: 1px solid var(--line);
+        }
+
+        .panel__title {
+            margin: 0;
+
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+        }
+
+        .panel__sub {
+            color: var(--dim);
+            font-size: .8rem;
+        }
+
+        /* WEEK NAV */
+
+        .week-nav {
+            display: flex;
+            gap: 10px;
+
+            margin-top: 20px;
+        }
+
+        .week-arrow {
+            width: 52px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            cursor: pointer;
+        }
+
+        .week-arrow:hover {
+            background: var(--surface-2);
+        }
+
+        .week-list {
+            flex: 1;
+
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+
+            gap: 10px;
+
+            margin: 0;
+            padding: 0;
+
+            list-style: none;
+        }
+
+        .week-btn {
+            width: 100%;
+
+            padding: 14px 16px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+
+            background: var(--surface);
+
+            color: var(--muted);
+
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .week-btn:hover {
+            background: var(--surface-2);
+        }
+
+        .week-btn.active {
+            border-color: var(--blue);
+
+            background:
+                linear-gradient(
+                    160deg,
+                    rgba(46,123,255,.24),
+                    rgba(46,123,255,.06)
+                );
+
+            color: white;
+        }
+
+        .week-btn__title {
+            display: block;
+
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .week-btn__range {
+            display: block;
+
+            margin-top: 3px;
+
+            color: var(--dim);
+            font-size: .8rem;
+        }
+
+        /* WEEK INFO */
+
+        .week-info {
+            display: grid;
+
+            grid-template-columns: auto 1fr;
+
+            align-items: center;
+
+            gap: 20px;
+
+            margin-top: 16px;
+
+            padding: 20px;
+        }
+
+        .week-info__title {
+            margin: 0;
+
+            font-family: var(--font-display);
+            font-size: 2rem;
+        }
+
+        .week-info__range {
+            margin: 3px 0 0;
+
+            color: var(--muted);
+        }
+
+        .week-facts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            margin: 0;
+            padding: 0;
+
+            list-style: none;
+        }
+
+        .week-facts li {
+            padding: 7px 12px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+
+            background: var(--bg-2);
+
+            color: var(--muted);
+        }
+
+        .week-facts strong {
+            margin-right: 5px;
+
+            color: white;
+
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+        }
+
+        /* BODY */
+
+        .fixtures-body {
+            margin-top: 20px;
+        }
+
+        .content-grid {
+            display: grid;
+
+            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+
+            gap: 20px;
+        }
+
+        /* MATCH LIST */
+
+        .fixtures-list {
+            padding: 18px 20px 22px;
+        }
+
+        .day-group + .day-group {
+            margin-top: 24px;
+        }
+
+        .day-head {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .day-head__date {
+            margin: 0;
+
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+        }
+
+        .day-head__count {
+            color: var(--dim);
+            font-size: .8rem;
+        }
+
+        .day-list {
+            display: grid;
+            gap: 10px;
+
+            margin: 0;
+            padding: 0;
+
+            list-style: none;
+        }
+
+        .fixture-card {
+            display: grid;
+
+            grid-template-columns:
+                90px
+                minmax(0, 1fr)
+                90px
+                minmax(0, 1fr)
+                110px;
+
+            align-items: center;
+
+            gap: 12px;
+
+            padding: 14px 16px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+
+            background: var(--bg-2);
+
+            transition: .15s ease;
+        }
+
+        .fixture-card:hover {
+            border-color: #2C4675;
+            background: var(--surface-2);
+        }
+
+        .fx-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .fx-time {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .status {
+            display: inline-flex;
+            width: fit-content;
+
+            padding: 3px 9px;
+
+            border-radius: 999px;
+
+            font-size: .7rem;
+            font-weight: 600;
+        }
+
+        .status--Finished {
+            background: rgba(255,255,255,.07);
+            color: var(--text-2);
+        }
+
+        .status--Live {
+            background: rgba(31,201,138,.15);
+            color: #7FE8BF;
+        }
+
+        .status--NotStarted {
+            background: rgba(139,156,192,.13);
+            color: var(--muted);
+        }
+
+        .status--Postponed {
+            background: rgba(242,181,59,.15);
+            color: #F6D07A;
+        }
+
+        .fx-team {
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            min-width: 0;
+        }
+
+        .fx-team--home {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .fx-name {
+            overflow: hidden;
+
+            color: var(--text);
+
+            font-weight: 600;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .fx-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 8px;
+
+            padding: 8px 5px;
+
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+
+            background: var(--surface);
+
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        .fx-score__sep {
+            width: 8px;
+            height: 3px;
+
+            border-radius: 2px;
+
+            background: var(--dim);
+        }
+
+        .fx-action {
+            text-align: right;
+
+            color: var(--dim);
+            font-size: .8rem;
+        }
+
+        .fx-link {
+            color: var(--blue-bright);
+
+            font-size: .82rem;
+            font-weight: 600;
+
+            text-decoration: none;
+        }
+
+        .fx-link:hover {
+            text-decoration: underline;
+        }
+
+        /* CREST */
+
+        .team-crest {
+            flex: none;
+
+            display: grid;
+            place-items: center;
+
+            width: 34px;
+            height: 34px;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    var(--crest-a) 0 70%,
+                    var(--crest-b) 70% 100%
+                );
+
+            color: var(--crest-ink, white);
+
+            font-family: var(--font-display);
+            font-size: .7rem;
+            font-weight: 700;
+
+            box-shadow:
+                inset 0 0 0 1px rgba(255,255,255,.15);
+        }
+
+        /* SIDEBAR */
+
+        .side-stack {
+            display: flex;
+            flex-direction: column;
+
+            gap: 20px;
+        }
+
+        .summary-list {
+            margin: 0;
+            padding: 8px 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+
+            padding: 9px 0;
+
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .summary-row:last-child {
+            border-bottom: 0;
+        }
+
+        .summary-row span {
+            color: var(--muted);
+        }
+
+        .summary-row strong {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+        }
+
+        .featured-body {
+            padding: 20px;
+
+            text-align: center;
+        }
+
+        .featured-teams {
+            display: grid;
+
+            grid-template-columns: 1fr auto 1fr;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .featured-team {
+            display: flex;
+            flex-direction: column;
+
+            align-items: center;
+
+            gap: 9px;
+
+            font-weight: 700;
+        }
+
+        .featured-score {
+            font-family: var(--font-display);
+            font-size: 2.3rem;
+            font-weight: 700;
+        }
+
+        .featured-info {
+            margin: 18px 0 0;
+            padding: 14px 0 0;
+
+            border-top: 1px solid var(--line-soft);
+
+            color: var(--muted);
+
+            list-style: none;
+        }
+
+        /* MOBILE */
+
+        @@media (max-width: 900px) {
+
+            .hero-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .fixture-card {
+                grid-template-columns:
+                    70px
+                    minmax(0, 1fr)
+                    70px
+                    minmax(0, 1fr);
+            }
+
+            .fx-action {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 600px) {
+
+            .fixtures-shell {
+                width: min(100% - 18px, 1200px);
+                padding-top: 10px;
+            }
+
+            .fixtures-hero {
+                padding: 24px 20px;
+            }
+
+            .hero-meta {
+                width: 100%;
+            }
+
+            .hero-meta > div {
+                flex: 1;
+            }
+
+            .week-list {
+                grid-template-columns: 1fr;
+            }
+
+            .week-info {
+                grid-template-columns: 1fr;
+            }
+
+            .fixture-card {
+                grid-template-columns: 1fr auto 1fr;
+            }
+
+            .fx-meta {
+                display: none;
+            }
+
+            .fx-team--home {
+                justify-content: flex-start;
+                text-align: left;
+            }
+
+            .fx-name {
+                font-size: .9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="fixtures-shell">
+
+        <!-- ================= HERO ================= -->
+
+        <header class="fixtures-hero">
+
+            <div class="hero-row">
+
+                <div>
+
+                    <div class="hero-league">
+
+                        <div class="league-mark">
+                            A
+                        </div>
+
+                        <span>Serie A • 2026/27</span>
+
+                    </div>
+
+                    <h1 class="hero-title">
+                        Haftalık Fikstür
+                    </h1>
+
+                    <p class="hero-subtitle">
+                        Sezonun maçlarını hafta hafta incele.
+                        Skorları, durumları ve maç detaylarını takip et.
+                    </p>
+
+                </div>
+
+                <dl class="hero-meta">
+
+                    <div>
+                        <dt>Takım</dt>
+                        <dd>20</dd>
+                    </div>
+
+                    <div>
+                        <dt>Hafta</dt>
+                        <dd>3</dd>
+                    </div>
+
+                    <div>
+                        <dt>Aktif</dt>
+                        <dd>@currentWeek</dd>
+                    </div>
+
+                </dl>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= HAFTA SEÇİCİ ================= -->
+
+        <nav class="week-nav">
+
+            <button class="week-arrow"
+                    type="button"
+                    onclick="changeWeek(-1)">
+                ‹
+            </button>
+
+            <ul class="week-list">
+
+                @for (int i = 1; i <= 3; i++)
+                {
+                    <li>
+
+                        <button type="button"
+                                class="week-btn @(i == currentWeek ? "active" : "")"
+                                onclick="goToWeek(@i)">
+
+                            <span class="week-btn__title">
+                                @i. Hafta
+                            </span>
+
+                            <span class="week-btn__range">
+                                Serie A fikstürü
+                            </span>
+
+                        </button>
+
+                    </li>
+                }
+
+            </ul>
+
+            <button class="week-arrow"
+                    type="button"
+                    onclick="changeWeek(1)">
+                ›
+            </button>
+
+        </nav>
+
+
+        <!-- ================= HAFTA BİLGİ ================= -->
+
+        <section class="panel week-info">
+
+            <div>
+
+                <h2 class="week-info__title">
+                    @currentWeek. Hafta
+                </h2>
+
+                <p class="week-info__range">
+                    Haftanın maçları
+                </p>
+
+            </div>
+
+            <ul class="week-facts">
+
+                <li>
+                    <strong>@Model.Count</strong>
+                    maç
+                </li>
+
+                <li>
+                    <strong>20</strong>
+                    takım
+                </li>
+
+                <li>
+                    <strong>
+                        @Model.Sum(x => (x.HomeScore ?? 0) + (x.AwayScore ?? 0))
+                    </strong>
+                    gol
+                </li>
+
+            </ul>
+
+        </section>
+
+
+        <!-- ================= BODY ================= -->
+
+        <div class="fixtures-body">
+
+            <div class="content-grid">
+
+                <!-- ================= MAÇLAR ================= -->
+
+                <section class="panel">
+
+                    <div class="panel__head">
+
+                        <h2 class="panel__title">
+                            Haftanın maçları
+                        </h2>
+
+                        <span class="panel__sub">
+                            Türkiye saati
+                        </span>
+
+                    </div>
+
+
+                    <div class="fixtures-list">
+
+                        @{
+                            var groupedMatches = Model
+                            .OrderBy(x => x.MatchDate)
+                            .ThenBy(x => x.Time)
+                            .GroupBy(x => x.MatchDate.Date);
+                        }
+
+
+                        @foreach (var day in groupedMatches)
+                        {
+
+                            <section class="day-group">
+
+                                <div class="day-head">
+
+                                    <h3 class="day-head__date">
+                                        @day.Key.ToString("dddd, dd MMMM", new System.Globalization.CultureInfo("tr-TR"))
+                                    </h3>
+
+                                    <span class="day-head__count">
+                                        @day.Count() maç
+                                    </span>
+
+                                </div>
+
+
+                                <ul class="day-list">
+
+                                    @foreach (var match in day)
+                                    {
+
+                                        string statusClass = match.Status switch
+                                        {
+                                            "Tamamlandı" => "Finished",
+                                            "Canlı" => "Live",
+                                            "Ertelendi" => "Postponed",
+                                            _ => "NotStarted"
+                                        };
+
+
+                                        <li>
+
+                                            <article class="fixture-card">
+
+                                                <div class="fx-meta">
+
+                                                    <time class="fx-time">
+                                                        @match.Time
+                                                    </time>
+
+                                                    <span class="status status--@statusClass">
+                                                        @match.Status
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div class="fx-team fx-team--home">
+
+                                                    <span class="fx-name">
+                                                        @match.HomeTeam.Name
+                                                    </span>
+
+                                                    <span class="team-crest"
+                                                          style="
+                                                                --crest-a:#2E7BFF;
+                                                                --crest-b:#101418;
+                                                                --crest-ink:#fff;
+                                                              ">
+                                                        @match.HomeTeam.Name.Substring(0, Math.Min(3, match.HomeTeam.Name.Length)).ToUpper()
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div class="fx-score">
+
+                                                    @if (match.HomeScore.HasValue && match.AwayScore.HasValue)
+                                                    {
+                                                        <span>
+                                                            @match.HomeScore
+                                                        </span>
+
+                                                        <span class="fx-score__sep"></span>
+
+                                                        <span>
+                                                            @match.AwayScore
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>VS</span>
+                                                    }
+
+                                                </div>
+
+
+                                                <div class="fx-team">
+
+                                                    <span class="team-crest"
+                                                          style="
+                                                                --crest-a:#8B9CC0;
+                                                                --crest-b:#142647;
+                                                                --crest-ink:#fff;
+                                                              ">
+                                                        @match.AwayTeam.Name.Substring(0, Math.Min(3, match.AwayTeam.Name.Length)).ToUpper()
+                                                    </span>
+
+                                                    <span class="fx-name">
+                                                        @match.AwayTeam.Name
+                                                    </span>
+
+                                                </div>
+
+
+                                                <div class="fx-action">
+
+                                                    @if (match.Status == "Tamamlandı")
+                                                    {
+                                                        <a class="fx-link"
+                                                           href="/Match/Detail/@match.MatchId">
+
+                                                            Maç detayı →
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>
+                                                            @match.Stadium
+                                                        </span>
+                                                    }
+
+                                                </div>
+
+                                            </article>
+
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                            </section>
+
+                        }
+
+                    </div>
+
+                </section>
+
+
+                <!-- ================= SAĞ PANEL ================= -->
+
+                <aside class="side-stack">
+
+
+                    <!-- ÖZET -->
+
+                    <section class="panel">
+
+                        <div class="panel__head">
+
+                            <h2 class="panel__title">
+                                @currentWeek. Hafta Özeti
+                            </h2>
+
+                        </div>
+
+
+                        <div class="summary-list">
+
+                            <div class="summary-row">
+                                <span>Maç</span>
+                                <strong>@Model.Count</strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Tamamlanan</span>
+                                <strong>
+                                    @Model.Count(x => x.Status == "Tamamlandı")
+                                </strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Gol</span>
+                                <strong>
+                                    @Model.Sum(x => (x.HomeScore ?? 0) + (x.AwayScore ?? 0))
+                                </strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Beraberlik</span>
+                                <strong>
+                                    @Model.Count(x =>
+                                    x.HomeScore.HasValue &&
+                                    x.AwayScore.HasValue &&
+                                    x.HomeScore == x.AwayScore)
+                                </strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Ev sahibi galibiyeti</span>
+                                <strong>
+                                    @Model.Count(x =>
+                                                                        x.HomeScore.HasValue &&
+                                                                        x.AwayScore.HasValue &&
+                                                                        x.HomeScore > x.AwayScore)
+                                </strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Deplasman galibiyeti</span>
+                                <strong>
+                                    @Model.Count(x =>
+                                                                        x.HomeScore.HasValue &&
+                                                                        x.AwayScore.HasValue &&
+                                                                        x.HomeScore < x.AwayScore)
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- ÖNE ÇIKAN MAÇ -->
+                    @{
+                        var featured = Model.FirstOrDefault();
+                    }
+
+                    @if (featured != null)
+                    {
+
+                        <section class="panel">
+
+                            <div class="panel__head">
+
+                                <h2 class="panel__title">
+                                    Haftanın Öne Çıkanı
+                                </h2>
+
+                            </div>
+
+
+                            <div class="featured-body">
+
+                                <div class="featured-teams">
+
+                                    <div class="featured-team">
+
+                                        <span class="team-crest"
+                                              style="
+                                                --crest-a:#2E7BFF;
+                                                --crest-b:#101418;
+                                                --crest-ink:#fff;
+                                              ">
+
+                                            @featured.HomeTeam.Name.Substring(
+                                            0,
+                                                                                Math.Min(3, featured.HomeTeam.Name.Length)
+                                                                                ).ToUpper()
+
+                                    </span>
+
+                                        <span>
+                                            @featured.HomeTeam.Name
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="featured-score">
+
+                                    @if (featured.HomeScore.HasValue)
+                                        {
+                                            @($"{featured.HomeScore}-{featured.AwayScore}")
+                                        }
+                                        else
+                                        {
+                                            @:VS
+                                        }
+
+                                    </div>
+
+
+                                    <div class="featured-team">
+
+                                        <span class="team-crest"
+                                              style="
+                                                --crest-a:#8B9CC0;
+                                                --crest-b:#142647;
+                                                --crest-ink:#fff;
+                                              ">
+
+                                            @featured.AwayTeam.Name.Substring(
+                                            0,
+                                                                                Math.Min(3, featured.AwayTeam.Name.Length)
+                                                                                ).ToUpper()
+
+                                    </span>
+
+                                        <span>
+                                            @featured.AwayTeam.Name
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <ul class="featured-info">
+
+                                    <li>
+                                        @featured.Stadium
+                                    </li>
+
+                                    <li>
+                                        @featured.MatchDate.ToString(
+                                                                        "dd MMMM yyyy",
+                                                                        new System.Globalization.CultureInfo("tr-TR")
+                                                                        )
+
+                                    • @featured.Time
+                                </li>
+
+                                <li>
+                                    @featured.Status
+                                </li>
+
+                            </ul>
+
+
+                            @if (featured.Status == "Tamamlandı")
+                                {
+                                    <a class="fx-link"
+                                       href="/Match/Detail/@featured.MatchId">
+
+                                        Maç detayına git →
+                                    </a>
+                                }
+
+                            </div>
+
+                        </section>
+
+                    }
+
+                </aside>
+
+            </div>
+
+        </div>
+
+
+        <p style="
+        margin-top:22px;
+        color:var(--dim);
+        text-align:center;
+        font-size:.8rem;
+    ">
+            Serie A • API üzerinden güncel fikstür
+        </p>
+
     </div>
-}
+
+
+    <script>
+
+        function goToWeek(week) {
+
+            window.location.href = '/Fixtures?week=' + week;
+
+        }
+
+
+        function changeWeek(direction) {
+
+            const currentWeek = @currentWeek;
+
+            let nextWeek = currentWeek + direction;
+
+            if (nextWeek < 1) {
+                nextWeek = 1;
+            }
+
+            if (nextWeek > 3) {
+                nextWeek = 3;
+            }
+
+            goToWeek(nextWeek);
+
+        }
+
+    </script>
+
+</body>
+</html>

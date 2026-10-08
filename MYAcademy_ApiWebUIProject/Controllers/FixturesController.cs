@@ -16,6 +16,8 @@ namespace MYAcademy_ApiWebUIProject.Controllers
         {
             var client = _httpClientFactory.CreateClient("SerieAApi");
 
+            Console.WriteLine("API ADRESİ: " + client.BaseAddress);
+
             var response = await client.GetAsync($"api/Matches/Week/{week}");
 
             if (!response.IsSuccessStatusCode)
@@ -26,6 +28,11 @@ namespace MYAcademy_ApiWebUIProject.Controllers
             var matches = await response.Content
                 .ReadFromJsonAsync<List<MatchDto>>();
 
+            if (matches == null)
+            {
+                matches = new List<MatchDto>();
+            }
+
             return View(matches);
         }
     }
@@ -33,17 +40,23 @@ namespace MYAcademy_ApiWebUIProject.Controllers
     public class MatchDto
     {
         public int MatchId { get; set; }
+
         public int Week { get; set; }
+
         public string Status { get; set; }
 
         public TeamDto HomeTeam { get; set; }
+
         public TeamDto AwayTeam { get; set; }
 
         public DateTime MatchDate { get; set; }
+
         public string Time { get; set; }
+
         public string Stadium { get; set; }
 
         public int? HomeScore { get; set; }
+
         public int? AwayScore { get; set; }
     }
 

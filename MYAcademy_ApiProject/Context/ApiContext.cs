@@ -8,7 +8,7 @@ namespace MYAcademy_ApiProject.Context
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(
-                "Server=DESKTOP-Q7KL8HK\\SQLEXPRESS;Database=Database=SerieADb;Integrated Security=True;TrustServerCertificate=True"
+                "Server=DESKTOP-Q7KL8HK\\SQLEXPRESS;Database=SerieADb;Integrated Security=True;TrustServerCertificate=True"
             );
         }
 
